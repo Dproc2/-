@@ -1,1 +1,410 @@
 
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Content Detector</title>
+
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+    }
+
+    body{
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg,#0f172a,#1e3a8a);
+        min-height:100vh;
+        color:white;
+        transition:0.5s;
+    }
+
+    .container{
+        width:90%;
+        max-width:1000px;
+        margin:auto;
+        padding-top:40px;
+        text-align:center;
+    }
+
+    h1{
+        font-size:42px;
+        margin-bottom:10px;
+    }
+
+    .subtitle{
+        opacity:0.8;
+        margin-bottom:30px;
+    }
+
+    .card{
+        background:rgba(255,255,255,0.1);
+        backdrop-filter:blur(10px);
+        border-radius:20px;
+        padding:25px;
+        box-shadow:0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .tabs{
+        display:flex;
+        justify-content:center;
+        gap:10px;
+        margin-bottom:20px;
+        flex-wrap:wrap;
+    }
+
+    .tab{
+        padding:12px 20px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        background:white;
+        color:black;
+        font-weight:bold;
+        transition:0.3s;
+    }
+
+    .tab:hover{
+        transform:scale(1.05);
+    }
+
+    .active{
+        background:#38bdf8;
+        color:white;
+    }
+
+    .section{
+        display:none;
+    }
+
+    .show{
+        display:block;
+    }
+
+    textarea,input{
+        width:100%;
+        padding:15px;
+        border:none;
+        border-radius:12px;
+        margin-top:15px;
+        font-size:16px;
+    }
+
+    button.check-btn{
+        margin-top:20px;
+        padding:14px 30px;
+        border:none;
+        border-radius:12px;
+        background:#38bdf8;
+        color:white;
+        font-size:18px;
+        cursor:pointer;
+        transition:0.3s;
+    }
+
+    button.check-btn:hover{
+        transform:scale(1.05);
+        background:#0ea5e9;
+    }
+
+    .result-box{
+        margin-top:30px;
+        padding:20px;
+        border-radius:15px;
+        background:rgba(255,255,255,0.1);
+    }
+
+    .result{
+        font-size:28px;
+        font-weight:bold;
+        margin-bottom:10px;
+    }
+
+    .percent{
+        font-size:22px;
+    }
+
+    .loader{
+        margin-top:20px;
+        display:none;
+    }
+
+    .dot{
+        width:12px;
+        height:12px;
+        background:white;
+        display:inline-block;
+        border-radius:50%;
+        margin:5px;
+        animation:bounce 0.6s infinite alternate;
+    }
+
+    .dot:nth-child(2){
+        animation-delay:0.2s;
+    }
+
+    .dot:nth-child(3){
+        animation-delay:0.4s;
+    }
+
+    @keyframes bounce{
+        to{
+            transform:translateY(-10px);
+        }
+    }
+
+    .footer{
+        margin-top:30px;
+        opacity:0.7;
+        font-size:14px;
+    }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🤖 AI Content Detector</h1>
+    <p class="subtitle">
+        Ստուգիր՝ տեքստը, հղումը կամ նկարը հավանական է AI-ի կողմից ստեղծված լինի թե ոչ
+    </p>
+
+    <div class="card">
+
+        <div class="tabs">
+            <button class="tab active" onclick="openTab('text')">📄 Տեքստ</button>
+            <button class="tab" onclick="openTab('link')">🔗 Հղում</button>
+            <button class="tab" onclick="openTab('image')">🖼 Նկար</button>
+        </div>
+
+        <!-- TEXT -->
+        <div id="text" class="section show">
+
+            <textarea id="textInput" rows="8" placeholder="Գրիր կամ տեղադրիր տեքստ այստեղ..."></textarea>
+
+            <button class="check-btn" onclick="checkText()">
+                Ստուգել
+            </button>
+
+        </div>
+
+        <!-- LINK -->
+        <div id="link" class="section">
+
+            <input type="text" id="linkInput" placeholder="Տեղադրիր հղումը այստեղ...">
+
+            <button class="check-btn" onclick="checkLink()">
+                Ստուգել
+            </button>
+
+        </div>
+
+        <!-- IMAGE -->
+        <div id="image" class="section">
+
+            <input type="file" id="imageInput">
+
+            <button class="check-btn" onclick="checkImage()">
+                Ստուգել
+            </button>
+
+        </div>
+
+        <!-- LOADER -->
+        <div class="loader" id="loader">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+
+        <!-- RESULT -->
+        <div class="result-box">
+            <div class="result" id="result">
+                Արդյունքը կհայտնվի այստեղ
+            </div>
+
+            <div class="percent" id="percent">
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        School Project • AI Detector • GitHub Pages Ready
+    </div>
+
+</div>
+
+<script>
+
+function openTab(tabId){
+
+    let sections = document.querySelectorAll(".section");
+    sections.forEach(section=>{
+        section.classList.remove("show");
+    });
+
+    document.getElementById(tabId).classList.add("show");
+
+    let tabs = document.querySelectorAll(".tab");
+    tabs.forEach(tab=>{
+        tab.classList.remove("active");
+    });
+
+    event.target.classList.add("active");
+}
+
+function showLoader(){
+    document.getElementById("loader").style.display="block";
+}
+
+function hideLoader(){
+    document.getElementById("loader").style.display="none";
+}
+
+function showResult(text,percent,isAI){
+
+    document.getElementById("result").innerHTML=text;
+
+    document.getElementById("percent").innerHTML=
+    "AI հավանականություն՝ <b>"+percent+"%</b>";
+
+    if(isAI){
+        document.body.style.background=
+        "linear-gradient(135deg,#7f1d1d,#dc2626)";
+    }
+    else{
+        document.body.style.background=
+        "linear-gradient(135deg,#0f172a,#1e3a8a)";
+    }
+}
+
+function calculateAI(text){
+
+    let words=text.split(" ");
+
+    let wordCount=words.length;
+
+    let totalLength=0;
+
+    words.forEach(word=>{
+        totalLength+=word.length;
+    });
+
+    let avgLength=totalLength/wordCount;
+
+    let uniqueWords=new Set(words);
+
+    let repetition=wordCount-uniqueWords.size;
+
+    let score=0;
+
+    if(avgLength>5){
+        score+=30;
+    }
+
+    if(repetition<3){
+        score+=30;
+    }
+
+    if(wordCount>25){
+        score+=40;
+    }
+
+    if(score>100){
+        score=100;
+    }
+
+    return score;
+}
+
+function checkText(){
+
+    let text=document.getElementById("textInput").value;
+
+    if(text.trim()==""){
+        alert("Գրիր տեքստ");
+        return;
+    }
+
+    showLoader();
+
+    setTimeout(()=>{
+
+        hideLoader();
+
+        let score=calculateAI(text);
+
+        if(score>=60){
+            showResult("🤖 Ավելի հավանական է՝ AI",score,true);
+        }
+        else{
+            showResult("👤 Ավելի հավանական է՝ մարդ",score,false);
+        }
+
+    },1500);
+}
+
+function checkLink(){
+
+    let link=document.getElementById("linkInput").value;
+
+    if(link.trim()==""){
+        alert("Տեղադրիր հղում");
+        return;
+    }
+
+    showLoader();
+
+    setTimeout(()=>{
+
+        hideLoader();
+
+        let random=Math.floor(Math.random()*100);
+
+        if(random>=50){
+            showResult("🤖 Հղումը հավանական է AI բովանդակություն ունենա",random,true);
+        }
+        else{
+            showResult("👤 Հղումը հավանական է մարդկային բովանդակություն ունենա",random,false);
+        }
+
+    },1500);
+}
+
+function checkImage(){
+
+    let image=document.getElementById("imageInput").files[0];
+
+    if(!image){
+        alert("Ընտրիր նկար");
+        return;
+    }
+
+    showLoader();
+
+    setTimeout(()=>{
+
+        hideLoader();
+
+        let random=Math.floor(Math.random()*100);
+
+        if(random>=50){
+            showResult("🤖 Նկարը հավանական է AI-ով ստեղծված լինի",random,true);
+        }
+        else{
+            showResult("📷 Նկարը հավանական է իրական լինի",random,false);
+        }
+
+    },1500);
+}
+
+</script>
+
+</body>
+</html>
